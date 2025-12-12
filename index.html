@@ -9,54 +9,55 @@
     
     <style>
         body {
-            /* 清除默认边距，使用 Flex 布局居中内容 */
+            /* 居中所有内容 */
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
-            justify-content: center; /* 水平居中 */
-            /* align-items: flex-start; /* 垂直对齐到顶部，方便查看按钮 */
+            flex-direction: column; /* 垂直堆叠 */
+            align-items: center; /* 水平居中 */
             min-height: 100vh;      
-            background-color: #f0f0f0; /* 浅灰背景色 */
+            background-color: #f0f0f0; 
             font-family: Arial, sans-serif;
-            flex-direction: column; /* 垂直堆叠内容 */
-            align-items: center; /* 确保所有内容在页面上居中 */
         }
         
         /* 确保 p5.js 画布显示为块级元素，避免底部空白 */
         canvas {
             display: block; 
-            margin-top: 20px; /* 与上方的按钮和文本留出间距 */
+            margin-top: 20px; 
             border: 1px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         
-        /* 调整 p5.js 创建的 DOM 元素（如按钮和文件上传框）的样式 */
-        .p5-content button, .p5-content input[type="file"] {
+        /* 统一 p5.js 创建的 DOM 元素（按钮和文件输入框）的样式 */
+        .p5-content button, 
+        .p5-content input[type="file"] {
             font-size: 16px;
             padding: 8px 15px;
-            margin: 5px;
+            margin: 10px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            background-color: #4CAF50;
             color: white;
             transition: background-color 0.3s;
         }
 
+        .p5-content button {
+            background-color: #4CAF50;
+        }
         .p5-content button:hover {
             background-color: #45a049;
         }
         
-        /* 容器用于包裹 p5.js 的 DOM 元素 */
+        /* 文件输入框默认样式可能不同，但我们通过 p5.js 定位 */
         .p5-content {
             position: relative;
             width: 100%;
-            max-width: 1000px; /* 匹配画布宽度 */
+            max-width: 1000px;
+            text-align: center; /* 确保画布上方的 p5.js DOM 元素居中 */
         }
-
     </style>
 </head>
 <body>
-    
     <div class="p5-content">
         </div>
     
