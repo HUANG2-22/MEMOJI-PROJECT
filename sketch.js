@@ -114,7 +114,7 @@ function processImage() {
                     emoji = emoji_64;
                 } else if (pix <= 192) {
                     emoji = emoji_128;
-                } else {
+                } else if (199 < pix <= 222){
                     emoji = emoji_192;
                 }
                 
