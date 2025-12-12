@@ -1,10 +1,10 @@
 let emoji_0, emoji_64, emoji_128, emoji_192;
-let uploadedImg = null;    // 用于存储用户上传的图片对象
-let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
-const targetSize = 900;    // 目标处理尺寸 (900x900)
+let uploadedImg = null;    
+let processedCanvas;       
+const targetSize = 900;    
 const grid = 10;           // 网格间距
-const maxDiameter = grid + 2; // 最大的 emoji 尺寸
-const minDiameter = 2;        // 最小的 emoji 尺寸
+const maxDiameter = 60;    // 最大的 emoji 尺寸 (合理上限)
+const minDiameter = 11;    // 最小的 emoji 尺寸 (用户要求)
 
 // ---------------------------
 // 1. 预加载图像资源
@@ -62,17 +62,20 @@ function handleFileChange(event) {
 
 
 // ---------------------------
-// 4. 图片处理核心逻辑 (实现亮区绘制，暗区稀疏)
+// 4. 图片处理核心逻辑 (组合策略 - 越亮越大，跳过暗区)
 // ---------------------------
 function processImage() {
     if (uploadedImg === null) return;
     
+    // 获取真实的像素尺寸 (不变)
     const originalWidth = uploadedImg.elt.naturalWidth || uploadedImg.width;
     const originalHeight = uploadedImg.elt.naturalHeight || uploadedImg.height;
 
+    // A. 临时画布 (不变)
     let tempCanvas = createGraphics(targetSize, targetSize);
     tempCanvas.pixelDensity(1); 
     
+    // B. 计算等比例缩放和居中裁剪 (不变)
     let w, h;
     let ratio = originalWidth / originalHeight;
 
@@ -85,13 +88,14 @@ function processImage() {
     }
 
     tempCanvas.image(uploadedImg, (targetSize - w) / 2, (targetSize - h) / 2, w, h);
-    tempCanvas.loadPixels();
+    tempCanvas.loadPixels(); // 加载原图像素数据
     
+    // C. 最终画布
     let finalCanvas = createGraphics(targetSize, targetSize);
-    finalCanvas.background(0); // 设置最终马赛克图片的黑色背景
+    finalCanvas.background(255); // 【重要】设置为白色背景，以显示暗区跳过后的效果
     
     // --- 策略二：密度变化参数 ---
-    const skipThreshold = 0.5; 
+    const skipThreshold = 0.3; // 亮度低于 30% (约 76) 时，开始跳过
     
     // D. 遍历原图像素并绘制表情符号
     for (let y = 0; y < tempCanvas.height; y += grid + 2) {
@@ -100,27 +104,26 @@ function processImage() {
             let index = (x + y * tempCanvas.width) * 4; 
             
             if (index + 3 < tempCanvas.pixels.length) {
-                let pix = tempCanvas.pixels[index]; 
+                let pix = tempCanvas.pixels[index]; // 读取原图的像素值 (0-255)
                 
-                // --- 策略二：密度变化 (抖动) ---
+                // --- 策略二：密度变化 (跳过暗区) ---
                 let brightnessMap = map(pix, 0, 255, 0.0, 1.0); 
                 
-                // 1. 判断是否处于暗区 (Brightness < skipThreshold)
-                if (brightnessMap < skipThreshold) { 
-                     // 2. 计算跳过概率 (最暗处 80% 跳过，中暗处 0% 跳过)
+                if (brightnessMap < skipThreshold) {
+                     // 越暗 (越接近 0.0)，跳过概率越高 (最高 80%)
+                     // 从 0.0-0.3 映射到 0.8-0.0
                      let skipProbability = map(brightnessMap, 0.0, skipThreshold, 0.8, 0.0); 
                      
                      if (random(1) < skipProbability) {
-                         continue; // 跳过本次绘制，暗区稀疏
+                         continue; // 跳过本次绘制
                      }
                 }
                 
-                // --- 策略一：尺寸缩放 (半色调) ---
-                // 亮度越低 (暗区)，直径越大
-                let reversedPix = 255 - pix;
-                let currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
+                // --- 策略一：尺寸缩放 (越亮直径越大) ---
+                // 直接映射 pix (0-255) 到 minDiameter(11) - maxDiameter(60)
+                let currentDiameter = map(pix, 0, 255, minDiameter, maxDiameter);
                 
-                // --- 选择 Emoji 类型 ---
+                // --- 选择 Emoji 类型 (不变) ---
                 let emoji;
                 if (pix <= 64) {
                     emoji = emoji_0;
@@ -138,8 +141,10 @@ function processImage() {
         }
     }
     
+    // E. 更新最终结果
     processedCanvas = finalCanvas;
     
+    // 清除 uploadedImg 元素
     uploadedImg.remove();
     uploadedImg = null;
 }
