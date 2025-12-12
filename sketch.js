@@ -108,7 +108,7 @@ function processImage() {
                 let pix = tempCanvas.pixels[index]; // 读取原图的像素值 (0-255)
                 
                 // --- 策略二：密度变化 (抖动) ---
-                let brightnessMap = map(pix, 0, 255, 1, 3.0); 
+                let brightnessMap = map(pix, 0, 255, 1, 30.0); 
                 
                 if (brightnessMap > skipThreshold) {
                      // 亮度越高，跳过概率越大 (从 0% 跳到 80%)
@@ -122,7 +122,7 @@ function processImage() {
                 // --- 策略一：尺寸缩放 (半色调) ---
                 // 亮度越低 (暗区)，直径越大
                 let reversedPix = 255 - pix;
-                let currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
+                let currentDiameter = map(reversedPix, 0, 255, maxDiameter, minDiameter);
                 
                 // --- 选择 Emoji 类型 ---
                 let emoji;
