@@ -96,7 +96,7 @@ function processImage() {
     finalCanvas.background(0); // 设置最终马赛克图片的黑色背景
     
     // --- 策略二：密度变化参数 ---
-    const skipThreshold = 0.5; // 亮度高于 50% (约 128) 才可能跳过
+    const skipThreshold = 0.9; // 亮度高于 50% (约 128) 才可能跳过
     
     // D. 遍历原图像素并绘制表情符号
     for (let y = 0; y < tempCanvas.height; y += grid + 2) {
