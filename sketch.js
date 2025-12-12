@@ -122,7 +122,7 @@ function processImage() {
                 
                 // --- 策略一：尺寸缩放 (半色调) ---
                 // 核心逻辑：亮度越低 (暗区)，直径越大
-                let reversedPix = 255 - pix;
+                let reversedPix = pix;
                 let currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
                 
                 // --- 选择 Emoji 类型 (基于亮度分级) ---
@@ -138,7 +138,7 @@ function processImage() {
                 }
                 
                 // 使用动态直径绘制
-                finalCanvas.image(emoji, x, y, currentDiameter, currentDiameter);
+                finalCanvas.image(emoji, x, y, currentDiameter*2, currentDiameter*2);
             }
         }
     }
