@@ -122,7 +122,7 @@ function processImage() {
                 // --- 策略一：尺寸缩放 (半色调) ---
                 // 亮度越低 (暗区)，直径越大
                 let reversedPix = pix;
-                let currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
+                let currentDiameter = map(reversedPix, 0, 255, minDiameter*11, maxDiameter*11);
                 
                 // --- 选择 Emoji 类型 ---
                 let emoji;
