@@ -7,7 +7,6 @@ const targetSize = 900;    // 目标处理尺寸 (900x900)
 // 1. 预加载图像资源
 // ---------------------------
 function preload() {
-    // 确保你的 PNG 文件名（包括大小写）与这里完全一致
     emoji_0 = loadImage("0.png");
     emoji_64 = loadImage("64.png");
     emoji_128 = loadImage("128.png");
@@ -22,20 +21,17 @@ function setup() {
     createCanvas(targetSize, targetSize + 200); 
     background(255);
     
-    // ----------------------------------------
     // 【CSP 修复】: 使用标准 JS 处理文件输入
-    // ----------------------------------------
     let fileInput = createInput('', 'file');
     fileInput.attribute('accept', 'image/*');
     fileInput.elt.onchange = handleFileChange; // 绑定标准事件处理器
     fileInput.position(width / 2 - 150, 40); 
-    fileInput.style('width', '180px'); // 设置宽度让其更好地显示
+    fileInput.style('width', '180px'); 
     
     // 创建保存按钮
     let saveButton = createButton('点击保存处理后的图片');
     saveButton.mousePressed(saveImage); 
     saveButton.position(width / 2 + 50, 40);
-    // ----------------------------------------
     
     textAlign(CENTER, CENTER);
 }
@@ -45,10 +41,8 @@ function setup() {
 // ---------------------------
 function handleFileChange(event) {
     const file = event.target.files[0];
-
     if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
-        
         reader.onload = (e) => {
             uploadedImg = createImg(e.target.result, '');
             uploadedImg.hide();
@@ -59,9 +53,7 @@ function handleFileChange(event) {
                 processImage();
             };
         };
-        
         reader.readAsDataURL(file);
-
     } else {
         uploadedImg = null;
         console.error('文件类型错误，请上传图片文件');
@@ -70,25 +62,29 @@ function handleFileChange(event) {
 
 
 // ---------------------------
-// 4. 图片处理核心逻辑 (修复了像素读取错误)
+// 4. 图片处理核心逻辑 (修复了尺寸读取和像素清空问题)
 // ---------------------------
 function processImage() {
     if (uploadedImg === null) return;
     
+    // *** 关键修正 ***：从原始 DOM 图像元素获取真实的像素尺寸
+    const originalWidth = uploadedImg.elt.naturalWidth || uploadedImg.width;
+    const originalHeight = uploadedImg.elt.naturalHeight || uploadedImg.height;
+
     // A. 临时画布：用于缩放和存储原始图片的像素数据 (900x900)
     let tempCanvas = createGraphics(targetSize, targetSize);
     tempCanvas.pixelDensity(1); 
     
     // B. 计算等比例缩放和居中裁剪
     let w, h;
-    let ratio = uploadedImg.width / uploadedImg.height;
-    
-    if (ratio > 1) { 
+    let ratio = originalWidth / originalHeight;
+
+    if (ratio > 1) { // 宽大于高，按高缩放
         h = targetSize;
-        w = uploadedImg.width * (targetSize / uploadedImg.height);
-    } else { 
+        w = originalWidth * (targetSize / originalHeight);
+    } else { // 高大于宽，按宽缩放
         w = targetSize;
-        h = uploadedImg.height * (targetSize / uploadedImg.width);
+        h = originalHeight * (targetSize / originalWidth);
     }
 
     // 绘制图片到 tempCanvas
@@ -122,14 +118,12 @@ function processImage() {
                     emoji = emoji_192;
                 }
                 
-                // 绘制到最终画布 finalCanvas 上
                 finalCanvas.image(emoji, x, y, diameter, diameter);
             }
         }
     }
     
-    // E. 更新最终结果
-    processedCanvas = finalCanvas; // 将最终的马赛克结果赋给 processedCanvas
+    processedCanvas = finalCanvas; 
     
     // 清除 uploadedImg 元素
     uploadedImg.remove();
@@ -141,15 +135,12 @@ function processImage() {
 // 5. 渲染和显示 (Draw)
 // ---------------------------
 function draw() {
-    // 绘制主画布的背景和指导文字
     background(255); 
     fill(0);
     textSize(20);
     text('上传图片后，处理结果将在下方显示 (900x900)', width / 2, 120);
     
-    // 如果处理完成，将结果显示在主画布上
     if (processedCanvas) {
-        // 将处理后的图像渲染到主画布 (位于 200px 处)
         image(processedCanvas, (width - targetSize) / 2, 200); 
     }
 }
