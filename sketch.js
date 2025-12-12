@@ -93,7 +93,7 @@ function processImage() {
     
     // C. 最终画布：用于绘制马赛克表情符号
     let finalCanvas = createGraphics(targetSize, targetSize);
-    finalCanvas.background(0); // 设置最终马赛克图片的黑色背景
+    finalCanvas.background(255); // 设置最终马赛克图片的黑色背景
     
     // --- 策略二：密度变化参数 ---
     const skipThreshold = 0.5; // 亮度高于 50% (约 128) 才可能跳过
