@@ -21,7 +21,7 @@ function preload() {
 // ---------------------------
 function setup() {
     createCanvas(targetSize, targetSize + 200); 
-    background(255);
+    background(66);
     
     // 【CSP 修复】: 使用标准 JS 处理文件输入
     let fileInput = createInput('', 'file');
