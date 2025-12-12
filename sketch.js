@@ -1,69 +1,149 @@
-let cam;
 let emoji_0, emoji_64, emoji_128, emoji_192;
+let uploadedImg = null; // 用于存储用户上传的图片
+let processedCanvas;    // 用于存储处理后的 900x900 图像
+const targetSize = 900; // 目标处理尺寸
 
-// 预加载所有图像资源
+// ---------------------------
+// 1. 预加载图像资源
+// ---------------------------
 function preload() {
-    // 确保你的项目文件夹中存在这四个 PNG 文件
     emoji_0 = loadImage("0.png");
     emoji_64 = loadImage("64.png");
     emoji_128 = loadImage("128.png");
     emoji_192 = loadImage("192.png");
 }
 
+// ---------------------------
+// 2. 设置界面
+// ---------------------------
 function setup() {
-    // 创建画布，尺寸和原始 Processing 代码保持一致
-    createCanvas(1920, 1080);
+    // 创建一个较小的画布用于显示上传和处理结果
+    createCanvas(1000, 1200);
+    background(220);
     
-    // 初始化摄像头捕获
-    // VIDEO 参数表示请求视频输入
-    // ready 标志用于确保在图像加载之前不调用 cam.read()
-    cam = createCapture(VIDEO);
+    // 创建文件上传控件
+    let fileInput = createFileInput(handleFile);
+    fileInput.position(50, 50); // 调整位置
     
-    // 隐藏实际的视频元素，因为它会被用作源，而不是直接显示
-    cam.hide();
+    // 创建保存按钮
+    let saveButton = createButton('点击保存处理后的图片');
+    saveButton.position(50, 100); // 调整位置
+    saveButton.mousePressed(saveImage); // 绑定点击事件
     
-    // 可选：如果希望画布尺寸与视频源尺寸匹配，可以使用 cam.size() 获取
-    // 这里我们保持 createCanvas 的固定尺寸 1920x1080
-    
-    // 设置像素密度为 1，确保 loadPixels() 正常工作
-    pixelDensity(1); 
+    textAlign(CENTER, CENTER);
+    textSize(24);
+    text('请点击 "Browse..." 上传您的图片', width / 2, 200);
 }
 
-function draw() {
-    background(0);
-    
-    // 检查摄像头是否准备就绪，并确保它正在捕获帧
-    if (cam.loadedmetadata) {
+// ---------------------------
+// 3. 处理上传的文件
+// ---------------------------
+function handleFile(file) {
+    print(file);
+    if (file.type === 'image') {
+        // 创建一个 P5 图像对象
+        uploadedImg = createImg(file.data, '');
+        // 必须隐藏原始的 DOM 图像元素
+        uploadedImg.hide();
         
-        // p5.js 中，通过 loadPixels() 和 updatePixels() 处理摄像头数据
-        cam.loadPixels(); 
+        // 当图片上传成功后，立即进行处理
+        processImage();
         
-        let grid = 10;
-        let diameter = 10;
-        
-        // 遍历摄像头像素，使用 cam.width/cam.height
-        for (let y = 0; y < cam.height; y += grid + 2) {
-            for (let x = 0; x < cam.width; x += grid + 2) {
-                
-                // p5.js 像素数组是 [R, G, B, A, R, G, B, A, ...] 结构
-                // loc 现在是像素数组中的索引，我们需要乘以 4 (R, G, B, A)
-                let index = (x + y * cam.width) * 4; 
-                
-                // 取 Red (红色) 分量进行灰度判断
-                // cam.pixels[index] 是 R
-                let pix = cam.pixels[index]; 
+    } else {
+        uploadedImg = null;
+        text('文件类型错误，请上传图片文件', width / 2, 250);
+    }
+}
 
-                // 颜色分级替换为对应的表情符号
+// ---------------------------
+// 4. 图片处理核心逻辑 (在新画布上完成)
+// ---------------------------
+function processImage() {
+    if (uploadedImg === null) return;
+    
+    // 创建一个临时的图形缓冲区（PGraphic）用于处理
+    processedCanvas = createGraphics(targetSize, targetSize);
+    processedCanvas.pixelDensity(1); 
+    
+    // 计算等比例缩放的尺寸
+    let w, h;
+    let ratio = uploadedImg.width / uploadedImg.height;
+    
+    if (ratio > 1) { // 宽大于高，按高度缩放，宽度超出裁剪
+        h = targetSize;
+        w = uploadedImg.width * (targetSize / uploadedImg.height);
+    } else { // 高大于宽，按宽度缩放，高度超出裁剪
+        w = targetSize;
+        h = uploadedImg.height * (targetSize / uploadedImg.width);
+    }
+
+    // 绘制并缩放图片到临时画布
+    // 居中裁剪逻辑：(targetSize - w) / 2 或 (targetSize - h) / 2 为负值
+    processedCanvas.image(uploadedImg, (targetSize - w) / 2, (targetSize - h) / 2, w, h);
+    
+    // 像素处理循环
+    processedCanvas.loadPixels();
+    
+    let grid = 10;
+    let diameter = 10;
+    
+    // 每次处理前清空，确保只留下表情符号
+    processedCanvas.background(0); 
+    
+    for (let y = 0; y < processedCanvas.height; y += grid + 2) {
+        for (let x = 0; x < processedCanvas.width; x += grid + 2) {
+            
+            // 获取在原始缩放图上的像素位置
+            let index = (x + y * processedCanvas.width) * 4; 
+            
+            // 确保索引在范围内
+            if (index + 3 < processedCanvas.pixels.length) {
+                // 读取 Red 分量
+                let pix = processedCanvas.pixels[index]; 
+                
+                // 颜色分级替换
                 if (pix <= 64) {
-                    image(emoji_0, x, y, diameter, diameter);
+                    processedCanvas.image(emoji_0, x, y, diameter, diameter);
                 } else if (pix > 64 && pix <= 128) {
-                    image(emoji_64, x, y, diameter, diameter);
+                    processedCanvas.image(emoji_64, x, y, diameter, diameter);
                 } else if (pix > 128 && pix <= 192) {
-                    image(emoji_128, x, y, diameter, diameter);
+                    processedCanvas.image(emoji_128, x, y, diameter, diameter);
                 } else if (pix > 192 && pix <= 255) {
-                    image(emoji_192, x, y, diameter, diameter);
+                    processedCanvas.image(emoji_192, x, y, diameter, diameter);
                 }
             }
         }
+    }
+    processedCanvas.updatePixels(); // 完成处理
+}
+
+
+// ---------------------------
+// 5. 渲染和显示
+// ---------------------------
+function draw() {
+    background(220); // 绘制主画布的背景
+    
+    // 渲染指导文字
+    fill(0);
+    textSize(20);
+    text('上传图片后，处理结果将在下方显示 (900x900)', width / 2, 160);
+    
+    // 如果处理完成，将结果显示在主画布上
+    if (processedCanvas) {
+        // 将处理后的图像从 (processedCanvas) 渲染到主画布 (canvas)
+        image(processedCanvas, (width - targetSize) / 2, 200); 
+    }
+}
+
+// ---------------------------
+// 6. 保存功能
+// ---------------------------
+function saveImage() {
+    if (processedCanvas) {
+        // p5.js 内置的 saveCanvas() 函数
+        save(processedCanvas, 'emojified_image', 'png');
+    } else {
+        alert('请先上传图片并等待处理完成！');
     }
 }

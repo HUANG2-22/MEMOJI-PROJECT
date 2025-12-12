@@ -3,28 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>表情符号马赛克相机</title>
+    <title>表情符号马赛克图片处理</title>
     
     <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
     
     <style>
         body {
+            /* 清除默认边距，使用 Flex 布局居中内容 */
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center; /* 水平居中 */
-            align-items: center;   /* 垂直居中 */
-            min-height: 100vh;      /* 确保全屏高度 */
-            background-color: #333; /* 背景色，方便看效果 */
+            /* align-items: flex-start; /* 垂直对齐到顶部，方便查看按钮 */
+            min-height: 100vh;      
+            background-color: #f0f0f0; /* 浅灰背景色 */
+            font-family: Arial, sans-serif;
+            flex-direction: column; /* 垂直堆叠内容 */
+            align-items: center; /* 确保所有内容在页面上居中 */
         }
+        
+        /* 确保 p5.js 画布显示为块级元素，避免底部空白 */
         canvas {
-            display: block; /* 避免画布下方出现间隙 */
+            display: block; 
+            margin-top: 20px; /* 与上方的按钮和文本留出间距 */
+            border: 1px solid #ccc;
         }
+        
+        /* 调整 p5.js 创建的 DOM 元素（如按钮和文件上传框）的样式 */
+        .p5-content button, .p5-content input[type="file"] {
+            font-size: 16px;
+            padding: 8px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .p5-content button:hover {
+            background-color: #45a049;
+        }
+        
+        /* 容器用于包裹 p5.js 的 DOM 元素 */
+        .p5-content {
+            position: relative;
+            width: 100%;
+            max-width: 1000px; /* 匹配画布宽度 */
+        }
+
     </style>
 </head>
 <body>
-    <script src="sketch.js"></script>
     
-    <h1>请授权摄像头以体验作品！</h1>
+    <div class="p5-content">
+        </div>
+    
+    <script src="sketch.js"></script>
+
 </body>
 </html>
