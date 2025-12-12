@@ -3,7 +3,7 @@ let uploadedImg = null;
 let processedCanvas;       
 const targetSize = 900;    
 const grid = 10;           // 网格间距
-const maxDiameter = 11;    // 最大的 emoji 尺寸 (合理上限)
+const maxDiameter = 60;    // 最大的 emoji 尺寸 (合理上限)
 const minDiameter = 11;    // 最小的 emoji 尺寸 (用户要求)
 
 // ---------------------------
