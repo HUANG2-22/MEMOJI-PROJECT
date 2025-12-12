@@ -3,8 +3,8 @@ let uploadedImg = null;    // 用于存储用户上传的图片对象
 let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
 const targetSize = 900;    // 目标处理尺寸 (900x900)
 const grid = 10;           // 网格间距
-const maxDiameter = grid + 22; // 最大的 emoji 尺寸 (12)
-const minDiameter = 12;        // 最小的 emoji 尺寸 (2)
+const maxDiameter = grid + 122; // 最大的 emoji 尺寸 (12)
+const minDiameter = 62;        // 最小的 emoji 尺寸 (2)
 
 // ---------------------------
 // 1. 预加载图像资源
@@ -93,7 +93,7 @@ function processImage() {
     
     // C. 最终画布：用于绘制马赛克表情符号
     let finalCanvas = createGraphics(targetSize, targetSize);
-    finalCanvas.background(0); // 设置最终马赛克图片的黑色背景
+    finalCanvas.background(255); // 设置最终马赛克图片的黑色背景
     
     // --- 策略二：密度变化参数 ---
     const skipThreshold = 0.5; // 亮度高于 50% (约 128) 才可能跳过
