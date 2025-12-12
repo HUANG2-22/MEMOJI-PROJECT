@@ -3,8 +3,8 @@ let uploadedImg = null;    // 用于存储用户上传的图片对象
 let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
 const targetSize = 900;    // 目标处理尺寸 (900x900)
 const grid = 10;           // 网格间距
-const maxDiameter = grid + 2; // 最大的 emoji 尺寸 (12)
-const minDiameter = 2;        // 最小的 emoji 尺寸 (2)
+const maxDiameter = grid + 22; // 最大的 emoji 尺寸 (12)
+const minDiameter = 12;        // 最小的 emoji 尺寸 (2)
 
 // ---------------------------
 // 1. 预加载图像资源
@@ -108,11 +108,11 @@ function processImage() {
                 let pix = tempCanvas.pixels[index]; // 读取原图的像素值 (0-255)
                 
                 // --- 策略二：密度变化 (抖动) ---
-                let brightnessMap = map(pix, 0, 255, 0.0, 1.0); 
+                let brightnessMap = map(pix, 0, 255, 1, 3.0); 
                 
                 if (brightnessMap > skipThreshold) {
                      // 亮度越高，跳过概率越大 (从 0% 跳到 80%)
-                     let skipProbability = map(brightnessMap, skipThreshold, 1.0, 0.0, 0.8); 
+                     let skipProbability = map(brightnessMap, skipThreshold, 1.0, 0.1, 0.8); 
                      
                      if (random(1) < skipProbability) {
                          continue; // 跳过本次绘制
