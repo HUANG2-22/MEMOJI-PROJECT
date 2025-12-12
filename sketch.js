@@ -3,8 +3,8 @@ let uploadedImg = null;    // 用于存储用户上传的图片对象
 let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
 const targetSize = 900;    // 目标处理尺寸 (900x900)
 const grid = 10;           // 网格间距
-const maxDiameter = grid + 2; // 最大的 emoji 尺寸 (12)
-const minDiameter = 2;        // 最小的 emoji 尺寸 (2)
+const maxDiameter = grid + 12; // 最大的 emoji 尺寸 (12)
+const minDiameter = 12;        // 最小的 emoji 尺寸 (2)
 
 // ---------------------------
 // 1. 预加载图像资源
