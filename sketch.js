@@ -1,14 +1,10 @@
 let emoji_0, emoji_64, emoji_128, emoji_192;
-let uploadedImg = null;    
-let processedCanvas;       
-const targetSize = 900;    
-
-// ---------------------------
-// 纹理控制参数
-// ---------------------------
-const grid = 12;            // 网格间距 (决定emoji中心点的位置)
-const maxDiameter = grid;   // emoji 的最大尺寸 (略小于 grid + 2，避免过度重叠)
-const minDiameter = 2;      // emoji 的最小尺寸 (亮区)
+let uploadedImg = null;    // 用于存储用户上传的图片对象
+let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
+const targetSize = 900;    // 目标处理尺寸 (900x900)
+const grid = 10;           // 网格间距
+const maxDiameter = grid + 2; // 最大的 emoji 尺寸 (12)
+const minDiameter = 2;        // 最小的 emoji 尺寸 (2)
 
 // ---------------------------
 // 1. 预加载图像资源
@@ -30,7 +26,7 @@ function setup() {
     // 【CSP 修复】: 使用标准 JS 处理文件输入
     let fileInput = createInput('', 'file');
     fileInput.attribute('accept', 'image/*');
-    fileInput.elt.onchange = handleFileChange; 
+    fileInput.elt.onchange = handleFileChange;
     fileInput.position(width / 2 - 150, 40); 
     fileInput.style('width', '180px'); 
     
@@ -52,7 +48,6 @@ function handleFileChange(event) {
         reader.onload = (e) => {
             uploadedImg = createImg(e.target.result, '');
             uploadedImg.hide();
-            
             uploadedImg.elt.onload = () => {
                 console.log("图片加载成功，开始处理...");
                 processImage();
@@ -67,12 +62,12 @@ function handleFileChange(event) {
 
 
 // ---------------------------
-// 4. 图片处理核心逻辑 (修复了尺寸读取和像素清空问题)
+// 4. 图片处理核心逻辑 (组合策略)
 // ---------------------------
 function processImage() {
     if (uploadedImg === null) return;
     
-    // 获取真实的图片尺寸
+    // 获取真实的像素尺寸
     const originalWidth = uploadedImg.elt.naturalWidth || uploadedImg.width;
     const originalHeight = uploadedImg.elt.naturalHeight || uploadedImg.height;
 
@@ -98,34 +93,38 @@ function processImage() {
     
     // C. 最终画布：用于绘制马赛克表情符号
     let finalCanvas = createGraphics(targetSize, targetSize);
-    finalCanvas.background(255); // 使用白色背景，以便小点时能看到留白
+    finalCanvas.background(0); // 设置最终马赛克图片的黑色背景
+    
+    // --- 策略二：密度变化参数 ---
+    const skipThreshold = 0.5; // 亮度高于 50% (约 128) 才可能跳过
     
     // D. 遍历原图像素并绘制表情符号
-    for (let y = 0; y < tempCanvas.height; y += grid) { // 网格间距使用 grid
-        for (let x = 0; x < tempCanvas.width; x += grid) { // 网格间距使用 grid
+    for (let y = 0; y < tempCanvas.height; y += grid + 2) {
+        for (let x = 0; x < tempCanvas.width; x += grid + 2) {
             
             let index = (x + y * tempCanvas.width) * 4; 
             
             if (index + 3 < tempCanvas.pixels.length) {
-                let pix = tempCanvas.pixels[index]; // 读取 Red 像素值 (0-255)
+                let pix = tempCanvas.pixels[index]; // 读取原图的像素值 (0-255)
                 
-                // ------------------------------------
-                // *** 策略一：基于亮度的尺寸缩放 ***
-                // ------------------------------------
-                let currentDiameter;
-
-                // 1. 将 0-255 反转为 255-0 (暗 -> 高值)
+                // --- 策略二：密度变化 (抖动) ---
+                let brightnessMap = map(pix, 0, 255, 0.0, 1.0); 
+                
+                if (brightnessMap > skipThreshold) {
+                     // 亮度越高，跳过概率越大 (从 0% 跳到 80%)
+                     let skipProbability = map(brightnessMap, skipThreshold, 1.0, 0.0, 0.8); 
+                     
+                     if (random(1) < skipProbability) {
+                         continue; // 跳过本次绘制
+                     }
+                }
+                
+                // --- 策略一：尺寸缩放 (半色调) ---
+                // 亮度越低 (暗区)，直径越大
                 let reversedPix = 255 - pix;
+                let currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
                 
-                // 2. 将反转后的值映射到 minDiameter-maxDiameter
-                // 暗区 (reversedPix: 255) -> maxDiameter
-                // 亮区 (reversedPix: 0)   -> minDiameter
-                currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
-                
-                // 确保尺寸不会溢出网格
-                currentDiameter = constrain(currentDiameter, minDiameter, maxDiameter);
-                
-                // 保持 emoji 类型基于亮度等级不变
+                // --- 选择 Emoji 类型 ---
                 let emoji;
                 if (pix <= 64) {
                     emoji = emoji_0;
@@ -137,20 +136,14 @@ function processImage() {
                     emoji = emoji_192;
                 }
                 
-                // 绘制到最终画布 finalCanvas 上
-                // 为了让点居中，需要根据动态直径调整绘制位置
-                finalCanvas.image(
-                    emoji, 
-                    x + (grid / 2 - currentDiameter / 2), // X 居中偏移
-                    y + (grid / 2 - currentDiameter / 2), // Y 居中偏移
-                    currentDiameter, 
-                    currentDiameter
-                );
+                // 使用动态直径绘制
+                finalCanvas.image(emoji, x, y, currentDiameter, currentDiameter);
             }
         }
     }
     
-    processedCanvas = finalCanvas; 
+    // E. 更新最终结果
+    processedCanvas = finalCanvas;
     
     // 清除 uploadedImg 元素
     uploadedImg.remove();
