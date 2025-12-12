@@ -3,7 +3,7 @@ let uploadedImg = null;    // 用于存储用户上传的图片对象
 let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
 const targetSize = 900;    // 目标处理尺寸 (900x900)
 const grid = 10;           // 网格间距
-const maxDiameter = grid + 122; // 最大的 emoji 尺寸 (12)
+const maxDiameter = grid + 666; // 最大的 emoji 尺寸 (12)
 const minDiameter = 62;        // 最小的 emoji 尺寸 (2)
 
 // ---------------------------
@@ -112,7 +112,7 @@ function processImage() {
                 
                 if (brightnessMap > skipThreshold) {
                      // 亮度越高，跳过概率越大 (从 0% 跳到 80%)
-                     let skipProbability = map(brightnessMap, skipThreshold, 1.0, 0.0, 0.8); 
+                     let skipProbability = map(brightnessMap, skipThreshold, 1.0, 0.8, 0.0); 
                      
                      if (random(1) < skipProbability) {
                          continue; // 跳过本次绘制
@@ -121,7 +121,7 @@ function processImage() {
                 
                 // --- 策略一：尺寸缩放 (半色调) ---
                 // 亮度越低 (暗区)，直径越大
-                let reversedPix = 255 - pix;
+                let reversedPix = pix;
                 let currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
                 
                 // --- 选择 Emoji 类型 ---
