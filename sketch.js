@@ -104,7 +104,7 @@ function processImage() {
             let index = (x + y * tempCanvas.width) * 4; 
             
             if (index + 3 < tempCanvas.pixels.length) {
-                let pix = 255-tempCanvas.pixels[index]; // 读取原图的像素值 (0-255)
+                let pix = tempCanvas.pixels[index]; // 读取原图的像素值 (0-255)
                 
                 // --- 策略二：密度变化 (跳过暗区) ---
                 let brightnessMap = map(pix, 0, 255, 0.0, 1.0); 
