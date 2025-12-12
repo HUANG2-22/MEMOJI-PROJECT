@@ -5,8 +5,8 @@ let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
 // --- 核心参数：可以调整这些参数来改变最终效果 ---
 const targetSize = 900;    // 目标处理尺寸 (900x900)
 const grid = 10;           // 网格间距：每个 emoji 单元格的边长 (影响分辨率和速度)
-const maxDiameter = grid + 2; // 最大的 emoji 尺寸 (通常是 grid + 2, 避免重叠过多)
-const minDiameter = 2;        // 最小的 emoji 尺寸 
+const maxDiameter = grid + 22; // 最大的 emoji 尺寸 (通常是 grid + 2, 避免重叠过多)
+const minDiameter = 10;        // 最小的 emoji 尺寸 
 const skipThreshold = 0.5;    // 密度抖动的亮度阈值 (0.0-1.0)。高于此亮度才开始稀疏
 // --------------------------------------------------
 
