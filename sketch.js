@@ -62,7 +62,7 @@ function handleFileChange(event) {
 
 
 // ---------------------------
-// 4. 图片处理核心逻辑 (组合策略)
+// 4. 图片处理核心逻辑 (组合策略 + 原图背景)
 // ---------------------------
 function processImage() {
     if (uploadedImg === null) return;
@@ -89,15 +89,16 @@ function processImage() {
 
     // 绘制图片到 tempCanvas
     tempCanvas.image(uploadedImg, (targetSize - w) / 2, (targetSize - h) / 2, w, h);
-    tempCanvas.loadPixels(); // 加载原图像素数据
+    tempCanvas.loadPixels(); // 加载原图像素数据 (用于读取亮度)
     
     // C. 最终画布：用于绘制马赛克表情符号
     let finalCanvas = createGraphics(targetSize, targetSize);
-    //finalCanvas.background(0); // 设置最终马赛克图片的黑色背景
-    finalCanvas.image(tempCanvas, 0, 0);
+    
+    // *** 核心修改：将缩放和裁剪后的原图作为背景 ***
+    finalCanvas.image(tempCanvas, 0, 0); 
     
     // --- 策略二：密度变化参数 ---
-    const skipThreshold = 0.5; // 亮度高于 50% (约 128) 才可能跳过
+    const skipThreshold = 0.5;
     
     // D. 遍历原图像素并绘制表情符号
     for (let y = 0; y < tempCanvas.height; y += grid + 2) {
@@ -112,7 +113,6 @@ function processImage() {
                 let brightnessMap = map(pix, 0, 255, 0.0, 1.0); 
                 
                 if (brightnessMap > skipThreshold) {
-                     // 亮度越高，跳过概率越大 (从 0% 跳到 80%)
                      let skipProbability = map(brightnessMap, skipThreshold, 1.0, 0.0, 0.8); 
                      
                      if (random(1) < skipProbability) {
@@ -121,7 +121,6 @@ function processImage() {
                 }
                 
                 // --- 策略一：尺寸缩放 (半色调) ---
-                // 亮度越低 (暗区)，直径越大
                 let reversedPix = 255 - pix;
                 let currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
                 
@@ -137,7 +136,7 @@ function processImage() {
                     emoji = emoji_192;
                 }
                 
-                // 使用动态直径绘制
+                // 使用动态直径绘制在原图背景之上
                 finalCanvas.image(emoji, x, y, currentDiameter, currentDiameter);
             }
         }
