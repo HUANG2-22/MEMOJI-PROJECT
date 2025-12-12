@@ -1,7 +1,14 @@
 let emoji_0, emoji_64, emoji_128, emoji_192;
-let uploadedImg = null;    // 用于存储用户上传的图片对象
-let processedCanvas;       // 存储最终的马赛克结果 (PGraphic)
-const targetSize = 900;    // 目标处理尺寸 (900x900)
+let uploadedImg = null;    
+let processedCanvas;       
+const targetSize = 900;    
+
+// ---------------------------
+// 纹理控制参数
+// ---------------------------
+const grid = 12;            // 网格间距 (决定emoji中心点的位置)
+const maxDiameter = grid;   // emoji 的最大尺寸 (略小于 grid + 2，避免过度重叠)
+const minDiameter = 2;      // emoji 的最小尺寸 (亮区)
 
 // ---------------------------
 // 1. 预加载图像资源
@@ -17,14 +24,13 @@ function preload() {
 // 2. 设置界面 (Setup)
 // ---------------------------
 function setup() {
-    // 创建主画布：900x900 (处理结果) + 200 (顶部控制区)
     createCanvas(targetSize, targetSize + 200); 
     background(255);
     
     // 【CSP 修复】: 使用标准 JS 处理文件输入
     let fileInput = createInput('', 'file');
     fileInput.attribute('accept', 'image/*');
-    fileInput.elt.onchange = handleFileChange; // 绑定标准事件处理器
+    fileInput.elt.onchange = handleFileChange; 
     fileInput.position(width / 2 - 150, 40); 
     fileInput.style('width', '180px'); 
     
@@ -47,7 +53,6 @@ function handleFileChange(event) {
             uploadedImg = createImg(e.target.result, '');
             uploadedImg.hide();
             
-            // 确保图片加载完成后再处理 (异步处理)
             uploadedImg.elt.onload = () => {
                 console.log("图片加载成功，开始处理...");
                 processImage();
@@ -67,7 +72,7 @@ function handleFileChange(event) {
 function processImage() {
     if (uploadedImg === null) return;
     
-    // *** 关键修正 ***：从原始 DOM 图像元素获取真实的像素尺寸
+    // 获取真实的图片尺寸
     const originalWidth = uploadedImg.elt.naturalWidth || uploadedImg.width;
     const originalHeight = uploadedImg.elt.naturalHeight || uploadedImg.height;
 
@@ -79,10 +84,10 @@ function processImage() {
     let w, h;
     let ratio = originalWidth / originalHeight;
 
-    if (ratio > 1) { // 宽大于高，按高缩放
+    if (ratio > 1) { 
         h = targetSize;
         w = originalWidth * (targetSize / originalHeight);
-    } else { // 高大于宽，按宽缩放
+    } else { 
         w = targetSize;
         h = originalHeight * (targetSize / originalWidth);
     }
@@ -93,32 +98,54 @@ function processImage() {
     
     // C. 最终画布：用于绘制马赛克表情符号
     let finalCanvas = createGraphics(targetSize, targetSize);
-    finalCanvas.background(0); // 设置最终马赛克图片的黑色背景
-    
-    let grid = 10;
-    let diameter = 10;
+    finalCanvas.background(255); // 使用白色背景，以便小点时能看到留白
     
     // D. 遍历原图像素并绘制表情符号
-    for (let y = 0; y < tempCanvas.height; y += grid + 2) {
-        for (let x = 0; x < tempCanvas.width; x += grid + 2) {
+    for (let y = 0; y < tempCanvas.height; y += grid) { // 网格间距使用 grid
+        for (let x = 0; x < tempCanvas.width; x += grid) { // 网格间距使用 grid
             
             let index = (x + y * tempCanvas.width) * 4; 
             
             if (index + 3 < tempCanvas.pixels.length) {
-                let pix = tempCanvas.pixels[index]; // 从原图 tempCanvas 读取像素值
+                let pix = tempCanvas.pixels[index]; // 读取 Red 像素值 (0-255)
                 
+                // ------------------------------------
+                // *** 策略一：基于亮度的尺寸缩放 ***
+                // ------------------------------------
+                let currentDiameter;
+
+                // 1. 将 0-255 反转为 255-0 (暗 -> 高值)
+                let reversedPix = 255 - pix;
+                
+                // 2. 将反转后的值映射到 minDiameter-maxDiameter
+                // 暗区 (reversedPix: 255) -> maxDiameter
+                // 亮区 (reversedPix: 0)   -> minDiameter
+                currentDiameter = map(reversedPix, 0, 255, minDiameter, maxDiameter);
+                
+                // 确保尺寸不会溢出网格
+                currentDiameter = constrain(currentDiameter, minDiameter, maxDiameter);
+                
+                // 保持 emoji 类型基于亮度等级不变
                 let emoji;
-                if (22 < pix <= 64) {
+                if (pix <= 64) {
                     emoji = emoji_0;
-                } else if (77 <pix <= 128) {
+                } else if (pix <= 128) {
                     emoji = emoji_64;
                 } else if (pix <= 192) {
                     emoji = emoji_128;
-                } else if (199 < pix <= 222){
+                } else {
                     emoji = emoji_192;
                 }
                 
-                finalCanvas.image(emoji, x, y, diameter, diameter);
+                // 绘制到最终画布 finalCanvas 上
+                // 为了让点居中，需要根据动态直径调整绘制位置
+                finalCanvas.image(
+                    emoji, 
+                    x + (grid / 2 - currentDiameter / 2), // X 居中偏移
+                    y + (grid / 2 - currentDiameter / 2), // Y 居中偏移
+                    currentDiameter, 
+                    currentDiameter
+                );
             }
         }
     }
