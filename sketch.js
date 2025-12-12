@@ -108,9 +108,9 @@ function processImage() {
                 let pix = tempCanvas.pixels[index]; // 从原图 tempCanvas 读取像素值
                 
                 let emoji;
-                if (pix <= 64) {
+                if (22 < pix <= 64) {
                     emoji = emoji_0;
-                } else if (pix <= 128) {
+                } else if (77 <pix <= 128) {
                     emoji = emoji_64;
                 } else if (pix <= 192) {
                     emoji = emoji_128;
