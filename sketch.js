@@ -113,7 +113,7 @@ function processImage() {
                 
                 if (brightnessMap > skipThreshold) {
                      // 亮度越高，跳过概率越大 (从 0% 跳到 80%)
-                     let skipProbability = map(brightnessMap, skipThreshold, 1.0, 0.0, 0.8); 
+                     let skipProbability = map(brightnessMap, skipThreshold, 0, 0.0, 0.8); 
                      
                      if (random(1) < skipProbability) {
                          continue; // 跳过本次绘制，产生稀疏效果
